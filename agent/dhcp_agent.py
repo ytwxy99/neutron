@@ -41,12 +41,17 @@ def register_options(conf):
 
 
 def main():
+    # 注册cfg
     register_options(cfg.CONF)
+    # 初始化notification， 没有指定publish_id
     common_config.init(sys.argv[1:])
+    # 日志的初始化操作
     config.setup_logging()
+    # 注册服务,监听rpc服务，dispatch在neutron.agent.dhcp.agent.AgentDhcpWithStateReport
     server = neutron_service.Service.create(
         binary='neutron-dhcp-agent',
         topic=topics.DHCP_AGENT,
         report_interval=cfg.CONF.AGENT.report_interval,
         manager='neutron.agent.dhcp.agent.DhcpAgentWithStateReport')
+    # 服务启动
     service.launch(cfg.CONF, server).wait()

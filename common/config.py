@@ -1,3 +1,4 @@
+# -*- coding:utf-8 -*-
 # Copyright 2011 VMware, Inc.
 # All Rights Reserved.
 #
@@ -198,9 +199,12 @@ def init(args, **kwargs):
     # FIXME(ihrachys): if import is put in global, circular import
     # failure occurs
     from neutron.common import rpc as n_rpc
+    # 进行notification的初始化操作，此时没有指定publish_ip
     n_rpc.init(cfg.CONF)
 
     # Validate that the base_mac is of the correct format
+
+    # Checking mac format is right or not
     msg = attributes._validate_regex(cfg.CONF.base_mac,
                                      attributes.MAC_PATTERN)
     if msg:
