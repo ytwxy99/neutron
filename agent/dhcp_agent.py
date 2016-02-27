@@ -49,6 +49,8 @@ def main():
     # 日志的初始化操作
     config.setup_logging()
     # 注册服务,监听rpc服务，dispatch在neutron.agent.dhcp.agent.DhcpAgentWithStateReport
+    import pdb;pdb.set_trace()
+    # 默认report_interval时间是30秒
     server = neutron_service.Service.create(
         binary='neutron-dhcp-agent',
         topic=topics.DHCP_AGENT,
