@@ -48,7 +48,7 @@ def main():
     common_config.init(sys.argv[1:])
     # 日志的初始化操作
     config.setup_logging()
-    # 注册服务,监听rpc服务，dispatch在neutron.agent.dhcp.agent.AgentDhcpWithStateReport
+    # 注册服务,监听rpc服务，dispatch在neutron.agent.dhcp.agent.DhcpAgentWithStateReport
     server = neutron_service.Service.create(
         binary='neutron-dhcp-agent',
         topic=topics.DHCP_AGENT,
