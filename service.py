@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2011 VMware, Inc
 # All Rights Reserved.
 #
@@ -243,12 +244,21 @@ class Service(n_rpc.Service):
         self.manager.init_host()
         super(Service, self).start()
         if self.report_interval:
+            # wangxiaoyu
+
+            # neutron-dhcp-agent calls follows.
+            # class oslo_service.loopingcall.FixedIntervalLoopingCall(f=None, *args, **kw)
+            # Bases: oslo_service.loopingcall.LoopingCallBase
+            # A fixed interval looping call.
+            # start(interval, initial_delay=None, stop_on_exception=True)
+
             pulse = loopingcall.FixedIntervalLoopingCall(self.report_state)
             pulse.start(interval=self.report_interval,
                         initial_delay=self.report_interval)
             self.timers.append(pulse)
 
         if self.periodic_interval:
+            # neutron-dhcp-agent 启动时不执行此处
             if self.periodic_fuzzy_delay:
                 initial_delay = random.randint(0, self.periodic_fuzzy_delay)
             else:
@@ -259,6 +269,7 @@ class Service(n_rpc.Service):
             periodic.start(interval=self.periodic_interval,
                            initial_delay=initial_delay)
             self.timers.append(periodic)
+        # 进行dhcp的同步，状态更新等 (对未激活的网络，进行删除清理)
         self.manager.after_start()
 
     def __getattr__(self, key):
