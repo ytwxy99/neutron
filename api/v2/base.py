@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2012 OpenStack Foundation.
 # All Rights Reserved.
 #
@@ -408,10 +409,12 @@ class Controller(object):
         self._notifier.info(request.context,
                             self._resource + '.create.start',
                             body)
+        # Checking attributes
+        # Body内容为请求的内容
         body = Controller.prepare_request_body(request.context,
                                                copy.deepcopy(body), True,
                                                self._resource, self._attr_info,
-                                               allow_bulk=self._allow_bulk)
+        # 创建网络时，action为create_network
         action = self._plugin_handlers[self.CREATE]
         # Check authz
         if self._collection in body:
@@ -419,6 +422,8 @@ class Controller(object):
             items = body[self._collection]
         else:
             items = [body]
+
+        # items为创建实例的相关信息
         # Ensure policy engine is initialized
         policy.init()
         # Store requested resource amounts grouping them by tenant
@@ -704,6 +709,7 @@ class Controller(object):
             })
 
 
+# create_resource方法根据传入参数声明一个Controller并用它们初始化一个wsgi的资源
 def create_resource(collection, resource, plugin, params, allow_bulk=False,
                     member_actions=None, parent=None, allow_pagination=False,
                     allow_sorting=False):
