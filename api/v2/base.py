@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#' -*- coding: utf-8 -*-
 # Copyright (c) 2012 OpenStack Foundation.
 # All Rights Reserved.
 #
@@ -414,6 +414,7 @@ class Controller(object):
         body = Controller.prepare_request_body(request.context,
                                                copy.deepcopy(body), True,
                                                self._resource, self._attr_info,
+                                               allow_bulk=self._allow_bulk)
         # 创建网络时，action为create_network
         action = self._plugin_handlers[self.CREATE]
         # Check authz
@@ -430,20 +431,28 @@ class Controller(object):
         # This won't work with multiple resources. However because of the
         # current structure of this controller there will hardly be more than
         # one resource for which reservations are being made
+
+        # the type of request_deltas is collections.defaultdict
         request_deltas = collections.defaultdict(int)
         for item in items:
+            # 如果是admin，则返回无任何操作，普通用户没有详细看。
             self._validate_network_tenant_ownership(request,
                                                     item[self._resource])
+            # 验证action是否有效
             policy.enforce(request.context,
                            action,
                            item[self._resource],
                            pluralized=self._collection)
+            # 如果是network创建，则self._resource为network, 验证item中是否有tenant_id
             if 'tenant_id' not in item[self._resource]:
                 # no tenant_id - no quota check
                 continue
+            # 获取tenant_id
             tenant_id = item[self._resource]['tenant_id']
+            # 在request_deltas的tenant_id项加一
             request_deltas[tenant_id] += 1
         # Quota enforcement
+        # 保留，预定
         reservations = []
         try:
             for (tenant, delta) in request_deltas.items():
@@ -476,11 +485,16 @@ class Controller(object):
                                          notifier_method)
             return create_result
 
+        # bulk为大量的；emulated为竞争
         def do_create(body, bulk=False, emulated=False):
+            # 当创建network时bulk, emulated都为False
             kwargs = {self._parent_id_name: parent_id} if parent_id else {}
+            # 当创建network时 kwargs为{}
             if bulk and not emulated:
                 obj_creator = getattr(self._plugin, "%s_bulk" % action)
             else:
+                # 当创建network时，neutron.plugins.ml2.plugin.Ml2Plugin 方法为create_network
+                # self._plugin是调用neutron.mananger  NeutronManager的get_plugin()方法
                 obj_creator = getattr(self._plugin, action)
             try:
                 if emulated:
@@ -502,6 +516,7 @@ class Controller(object):
                         quota.QUOTAS.cancel_reservation(
                             request.context, reservation.reservation_id)
 
+        # 创建network时self._collection 为 'networks'
         if self._collection in body and self._native_bulk:
             # plugin does atomic bulk create operations
             objs = do_create(body, bulk=True)
@@ -518,6 +533,7 @@ class Controller(object):
                 objs = do_create(body, bulk=True, emulated=True)
                 return notify({self._collection: objs})
             else:
+                # 创建network执行此代码,且body为{u'network': {u'router:external': False, u'name': u'wangxy-b-test', 'provider:physical_network': <object object at 0x7f5b10a5e2f0>, u'admin_state_up': True, u'tenant_id': u'8a503910b4394b2782194f4a3cc9d835', 'segments': <object object at 0x7f5b10a5e2f0>, u'provider:network_type': u'vxlan', 'qos_policy_id': None, 'port_security_enabled': True, u'shared': False, u'provider:segmentation_id': 2}}
                 obj = do_create(body)
                 self._send_nova_notification(action, {},
                                              {self._resource: obj})

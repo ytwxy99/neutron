@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2013 OpenStack Foundation
 # All Rights Reserved.
 #
@@ -608,11 +609,16 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 self._delete_objects(context, resource, objects)
 
     def _create_network_db(self, context, network):
+        # 获取创建network的内容, attributes在api/v2/attributes.py下
         net_data = network[attributes.NETWORK]
+        # 获取创建用户的租户id
         tenant_id = self._get_tenant_id_for_create(context, net_data)
         session = context.session
         with session.begin(subtransactions=True):
+            # 如果租户下没有对应的安全组，将创建个默认的安全组
             self._ensure_default_security_group(context, tenant_id)
+            # create_network在db/db_base_plugin_v2.py下；result为Network数据库的modal
+            # 执行了network的db创建操作，返回Network类的字典
             result = super(Ml2Plugin, self).create_network(context, network)
             self.extension_manager.process_create_network(context, net_data,
                                                           result)
@@ -638,6 +644,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return self._create_network_db(context, network)
 
     def create_network(self, context, network):
+        # result:{'status': 'ACTIVE', 'subnets': [], 'name': u'11', 'provider:physical_network': None, 'admin_state_up': True, 'tenant_id': u'bbc698e70cb14751b596c7d7d833c7fe', 'provider:segmentation_id': 3, 'mtu': 0, 'router:external': False, 'port_security_enabled': True, 'vlan_transparent': None, 'shared': False, 'provider:network_type': u'vxlan', 'id': '8371e217-e1ac-4e98-ab3a-0bfc2e6d7e63', 'qos_policy_id': None} 此为无创建subnet情况下
+        # mech_context: <neutron.plugins.ml2.driver_context.NetworkContext object at 0x7f699f5f8bd0>
         result, mech_context = self._create_network_with_retries(context,
                                                                  network)
         try:
