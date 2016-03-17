@@ -1,4 +1,4 @@
-#' -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # Copyright (c) 2012 OpenStack Foundation.
 # All Rights Reserved.
 #
@@ -327,6 +327,9 @@ class Controller(object):
                     item = {self._resource: body}
                     self._dhcp_agent_notifier.notify(context, item, methodname)
             else:
+                # /usr/lib/python2.7/dist-packages/neutron/api/rpc/agentnotifiers/dhcp_rpc_agent_api.py
+                # 当创建和删除时，从此除调用rpc或者schedule
+                # 在创建network时，不进行rpc操作
                 self._dhcp_agent_notifier.notify(context, data, methodname)
 
     def _send_nova_notification(self, action, orig, returned):
@@ -535,6 +538,8 @@ class Controller(object):
             else:
                 # 创建network执行此代码,且body为{u'network': {u'router:external': False, u'name': u'wangxy-b-test', 'provider:physical_network': <object object at 0x7f5b10a5e2f0>, u'admin_state_up': True, u'tenant_id': u'8a503910b4394b2782194f4a3cc9d835', 'segments': <object object at 0x7f5b10a5e2f0>, u'provider:network_type': u'vxlan', 'qos_policy_id': None, 'port_security_enabled': True, u'shared': False, u'provider:segmentation_id': 2}}
                 obj = do_create(body)
+
+                #创建network什么都没有做
                 self._send_nova_notification(action, {},
                                              {self._resource: obj})
                 return notify({self._resource: self._view(request.context,

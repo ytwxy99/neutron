@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2013 OpenStack Foundation.
 # All Rights Reserved.
 #
@@ -100,6 +101,7 @@ class External_net_db_mixin(object):
         attributes.NETWORKS, ['_extend_network_dict_l3'])
 
     def _process_l3_create(self, context, net_data, req_data):
+        # 设置网络是否是外部网络
         external = req_data.get(external_net.EXTERNAL)
         external_set = attributes.is_attr_set(external)
 

@@ -620,18 +620,25 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # create_network在db/db_base_plugin_v2.py下；result为Network数据库的modal
             # 执行了network的db创建操作，返回Network类的字典
             result = super(Ml2Plugin, self).create_network(context, network)
+            # 设置网络是否开启安全组，默认开启，其中只是DB操作
             self.extension_manager.process_create_network(context, net_data,
                                                           result)
+            # 当网络为external网络 在db中记录为外部网络
             self._process_l3_create(context, result, net_data)
             net_data['id'] = result['id']
+            # vxlan的segment id, 及其 network_type is vxlan, 创建network和segment id关系；db操作
             self.type_manager.create_network_segments(context, net_data,
                                                       tenant_id)
+            # 将segment的信息存入result
             self.type_manager.extend_network_dict_provider(context, result)
+            # neutron/plugins/ml2/driver_context.py (38)
+            #{'_segments': [{'segmentation_id': 3, 'physical_network': None, 'id': u'0afa246e-ff2d-43ef-84b3-3cdd4c322086', 'network_type': u'vxlan'}], '_plugin': <neutron.plugins.ml2.plugin.Ml2Plugin object at 0x7f06ba399810>, '_original_network': None, '_plugin_context': <neutron.context.Context object at 0x7f06b9952990>, '_network': {'status': 'ACTIVE', 'subnets': [], 'name': u'test3', 'provider:physical_network': None, 'admin_state_up': True, 'tenant_id': u'bbc698e70cb14751b596c7d7d833c7fe', 'provider:segmentation_id': 3, 'mtu': 0, 'router:external': False, 'port_security_enabled': True, 'vlan_transparent': None, 'shared': False, 'provider:network_type': u'vxlan', 'id': 'fc4c61b8-b901-42eb-a6a5-460894c6193f', 'qos_policy_id': None}}
             mech_context = driver_context.NetworkContext(self, context,
                                                          result)
+            # 对vxlan, gre什么都没有操作
             self.mechanism_manager.create_network_precommit(mech_context)
 
-            if net_data.get(api.MTU, 0) > 0:
+            if net_data.get(api.MTU, 0) > 0: # pass
                 res = super(Ml2Plugin, self).update_network(context,
                     result['id'], {'network': {api.MTU: net_data[api.MTU]}})
                 result[api.MTU] = res.get(api.MTU, 0)
@@ -649,6 +656,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         result, mech_context = self._create_network_with_retries(context,
                                                                  network)
         try:
+            # do nothing
             self.mechanism_manager.create_network_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
             with excutils.save_and_reraise_exception():

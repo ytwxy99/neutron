@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2013 OpenStack Foundation
 # All Rights Reserved.
 #
@@ -179,6 +180,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
 
     def create_network_segments(self, context, network, tenant_id):
         """Call type drivers to create network segments."""
+        #[{'segmentation_id': 2, 'physical_network': None, 'network_type': u'vxlan'}]
         segments = self._process_provider_create(network)
         session = context.session
         mtu = []
@@ -220,6 +222,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
     def reserve_provider_segment(self, session, segment):
         network_type = segment.get(api.NETWORK_TYPE)
         driver = self.drivers.get(network_type)
+        # /usr/lib/python2.7/dist-packages/neutron/plugins/ml2/drivers/type_tunnel.py(198)reserve_provider_segment()
         return driver.obj.reserve_provider_segment(session, segment)
 
     def _allocate_segment(self, session, network_type):
@@ -391,6 +394,8 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         error = False
         for driver in self.ordered_mech_drivers:
             try:
+                # /usr/lib/python2.7/dist-packages/neutron/plugins/ml2/driver_api.py(579)create_network_precommit()
+                # The method implments is pass, do nothing!
                 getattr(driver.obj, method_name)(context)
             except Exception:
                 LOG.exception(
@@ -821,6 +826,11 @@ class ExtensionManager(stevedore.named.NamedExtensionManager):
 
     def process_create_network(self, plugin_context, data, result):
         """Notify all extension drivers during network creation."""
+        """plugin_context包含用户信息，user_id, tenant_id
+           driver.obj is <neutron.plugins.ml2.extensions.port_security.PortSecurityExtensionDriver object at 0x7f65ce9a3690>
+           /usr/lib/python2.7/dist-packages/neutron/plugins/ml2/extensions/port_security.py(40)process_create_network()
+        """
+        # 这是是否port开启安全组 默认是True,开启
         self._call_on_ext_drivers("process_create_network", plugin_context,
                                   data, result)
 

@@ -177,7 +177,7 @@ class Notifier(object):
 
             ctx = context.get_admin_context()
             port = self._plugin.get_port(ctx, port_id)
-
+ 
         if port and self._is_compute_port(port):
             if action == 'delete_port':
                 return self._get_port_delete_event(port)

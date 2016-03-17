@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2013 OpenStack Foundation.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -168,6 +169,7 @@ class DhcpAgentNotifyAPI(object):
         # data is {'key' : 'value'} with only one key
         if method_name not in self.VALID_METHOD_NAMES:
             return
+        # 如果是network的话，obj_type为network
         obj_type = list(data.keys())[0]
         if obj_type not in self.VALID_RESOURCES:
             return
@@ -179,6 +181,7 @@ class DhcpAgentNotifyAPI(object):
             network_id = obj_value['network_id']
         if not network_id:
             return
+        # 如果是network的话，method_name为network_create_end
         method_name = method_name.replace(".", "_")
         if method_name.endswith("_delete_end"):
             if 'id' in obj_value:
