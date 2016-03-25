@@ -123,6 +123,7 @@ class DhcpAgentNotifyAPI(object):
         if fanout_required:
             self._fanout_message(context, method, payload)
         elif cast_required:
+            # create_subet_end 
             admin_ctx = (context if context.is_admin else context.elevated())
             network = self.plugin.get_network(admin_ctx, network_id)
             agents = self.plugin.get_dhcp_agents_hosting_networks(
@@ -139,6 +140,7 @@ class DhcpAgentNotifyAPI(object):
             enabled_agents = self._get_enabled_agents(
                 context, network, agents, method, payload)
             for agent in enabled_agents:
+                # agent.topic is dhcp_agent for creating subnet, method is  "subnet_create_end"
                 self._cast_message(
                     context, method, payload, agent.host, agent.topic)
 
@@ -189,4 +191,5 @@ class DhcpAgentNotifyAPI(object):
                                     {obj_type + '_id': obj_value['id']},
                                     network_id)
         else:
+            # 创建子网subnet_create_end
             self._notify_agents(context, method_name, data, network_id)

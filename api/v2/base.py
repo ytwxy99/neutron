@@ -483,6 +483,7 @@ class Controller(object):
             self._notifier.info(request.context,
                                 notifier_method,
                                 create_result)
+            # network_create_end , neutron/agent/dhcp/agent.py
             self._send_dhcp_notification(request.context,
                                          create_result,
                                          notifier_method)
