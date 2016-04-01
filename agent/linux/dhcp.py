@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2012 OpenStack Foundation
 # All Rights Reserved.
 #
@@ -199,7 +200,9 @@ class DhcpLocalProcess(DhcpBase):
         if self.active:
             self.restart()
         elif self._enable_dhcp():
+            # 确保DHCP的dnsmasq文件目录存在
             commonutils.ensure_dir(self.network_conf_dir)
+            # 创建port，namespace
             interface_name = self.device_manager.setup(self.network)
             self.interface_name = interface_name
             self.spawn_process()
@@ -983,6 +986,7 @@ class DeviceManager(object):
 
     def get_interface_name(self, network, port):
         """Return interface(device) name for use by the DHCP process."""
+        # <neutron.agent.linux.interface.OVSInterfaceDriver object at 0x7fa926a35b10>
         return self.driver.get_device_name(port)
 
     def get_device_id(self, network):
@@ -1118,15 +1122,21 @@ class DeviceManager(object):
             network_id=network.id,
             tenant_id=network.tenant_id,
             fixed_ips=unique_ip_subnets)
+        # Note(Wang Xiaoyu), it will should be debuged
+        # if action is subnet_create_end, /usr/lib/python2.7/dist-packages/neutron/agent/dhcp/agent.py
+        # rpc.call  create_dhcp_port
+        # 基本上就是db操作
         return self.plugin.create_dhcp_port({'port': port_dict})
 
     def setup_dhcp_port(self, network):
         """Create/update DHCP port for the host if needed and return port."""
 
         # The ID that the DHCP port will have (or already has).
+        # Note(Wang Xiaoyu), '_ns_name': u'qdhcp-3164966e-552b-4cad-a472-59a0e42d37b7'
         device_id = self.get_device_id(network)
 
         # Get the set of DHCP-enabled subnets on this network.
+        # u'aeb67125-9083-4d28-80bb-3304393c42a4': {u'name': u'10.10.5.0', u'enable_dhcp': True, u'network_id': u'3164966e-552b-4cad-a472-59a0e42d37b7', u'tenant_id': u'796ad771a596484eb0f6348d60215da2', u'dns_nameservers': [], u'ipv6_ra_mode': None, u'allocation_pools': [{u'start': u'10.10.5.2', u'end': u'10.10.5.254'}], u'gateway_ip': u'10.10.5.1', u'shared': False, u'ip_version': 4, u'host_routes': [], u'cidr': u'10.10.5.0/24', u'ipv6_address_mode': None, u'id': u'aeb67125-9083-4d28-80bb-3304393c42a4', u'subnetpool_id': None}}
         dhcp_subnets = {subnet.id: subnet for subnet in network.subnets
                         if subnet.enable_dhcp}
 
@@ -1146,11 +1156,13 @@ class DeviceManager(object):
             raise exceptions.Conflict()
 
         # Convert subnet_id to subnet dict
+        # [{'subnet_id': u'deccf8dd-55fe-4fa1-8a2e-aa3ffa8ef5d0', 'subnet': {u'name': u'20.20.3.0', u'enable_dhcp': True, u'network_id': u'fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', u'tenant_id': u'bbc698e70cb14751b596c7d7d833c7fe', u'dns_nameservers': [], u'ipv6_ra_mode': None, u'allocation_pools': [{u'start': u'20.20.3.2', u'end': u'20.20.3.254'}], u'gateway_ip': u'20.20.3.1', u'shared': False, u'ip_version': 4, u'host_routes': [], u'cidr': u'20.20.3.0/24', u'ipv6_address_mode': None, u'id': u'deccf8dd-55fe-4fa1-8a2e-aa3ffa8ef5d0', u'subnetpool_id': None}, 'ip_address': u'20.20.3.2'}]
         fixed_ips = [dict(subnet_id=fixed_ip.subnet_id,
                           ip_address=fixed_ip.ip_address,
                           subnet=dhcp_subnets[fixed_ip.subnet_id])
                      for fixed_ip in dhcp_port.fixed_ips]
 
+        # [{'subnet_id': u'deccf8dd-55fe-4fa1-8a2e-aa3ffa8ef5d0', 'subnet': {u'name': u'20.20.3.0', u'enable_dhcp': True, u'network_id': u'fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', u'tenant_id': u'bbc698e70cb14751b596c7d7d833c7fe', u'dns_nameservers': [], u'ipv6_ra_mode': None, u'allocation_pools': [{u'start': u'20.20.3.2', u'end': u'20.20.3.254'}], u'gateway_ip': u'20.20.3.1', u'shared': False, u'ip_version': 4, u'host_routes': [], u'cidr': u'20.20.3.0/24', u'ipv6_address_mode': None, u'id': u'deccf8dd-55fe-4fa1-8a2e-aa3ffa8ef5d0', u'subnetpool_id': None}, 'ip_address': u'20.20.3.2'}]
         ips = [DictModel(item) if isinstance(item, dict) else item
                for item in fixed_ips]
         dhcp_port.fixed_ips = ips
@@ -1167,19 +1179,27 @@ class DeviceManager(object):
 
     def setup(self, network):
         """Create and initialize a device for network's DHCP on this host."""
+        # 返回port信息
+        # {u'status': u'DOWN', u'binding:host_id': u'tracy', u'allowed_address_pairs': [], u'extra_dhcp_opts': [], u'dns_assignment': [{u'hostname': u'host-20-20-3-2', u'ip_address': u'20.20.3.2', u'fqdn': u'host-20-20-3-2.openstacklocal.'}], u'device_owner': u'network:dhcp', u'tenant_id': u'bbc698e70cb14751b596c7d7d833c7fe', u'binding:profile': {}, u'port_security_enabled': False, u'fixed_ips': [{'subnet_id': u'deccf8dd-55fe-4fa1-8a2e-aa3ffa8ef5d0', 'subnet': {u'name': u'20.20.3.0', u'enable_dhcp': True, u'network_id': u'fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', u'tenant_id': u'bbc698e70cb14751b596c7d7d833c7fe', u'dns_nameservers': [], u'ipv6_ra_mode': None, u'allocation_pools': [{u'start': u'20.20.3.2', u'end': u'20.20.3.254'}], u'gateway_ip': u'20.20.3.1', u'shared': False, u'ip_version': 4, u'host_routes': [], u'cidr': u'20.20.3.0/24', u'ipv6_address_mode': None, u'id': u'deccf8dd-55fe-4fa1-8a2e-aa3ffa8ef5d0', u'subnetpool_id': None}, 'ip_address': u'20.20.3.2'}], u'id': u'2f503d11-0574-4a3f-b022-157a9a4c5639', u'security_groups': [], u'device_id': u'dhcpddd4d6bb-1560-5360-9a73-840de09c295e-fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', u'name': u'', u'admin_state_up': True, u'network_id': u'fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', u'dns_name': u'', u'binding:vif_details': {}, u'binding:vnic_type': u'normal', u'binding:vif_type': u'binding_failed', u'qos_policy_id': None, u'mac_address': u'fa:16:3e:f5:d0:f0'}
         port = self.setup_dhcp_port(network)
+        # 向network数据结构中存储port信息，在内存中存储
         self._update_dhcp_port(network, port)
+        # 拼接字符串获取到interface_name  tap3a9e37d9-34
         interface_name = self.get_interface_name(network, port)
 
         if ip_lib.ensure_device_is_ready(interface_name,
                                          namespace=network.namespace):
             LOG.debug('Reusing existing device: %s.', interface_name)
         else:
+            # 当namespace未创建成功时。
+            # <neutron.agent.linux.interface.OVSInterfaceDriver object at 0x7f3474930b50>
             self.driver.plug(network.id,
                              port.id,
                              interface_name,
                              port.mac_address,
                              namespace=network.namespace)
+            # Note(command), ['sudo', '/usr/bin/neutron-rootwrap', '/etc/neutron/rootwrap.conf', 'ip', 'netns', 'exec', 'qdhcp-fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', 'iptables-save', '-c']
+            # Note(command),['sudo', '/usr/bin/neutron-rootwrap', '/etc/neutron/rootwrap.conf', 'ip', 'netns', 'exec', 'qdhcp-fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', 'iptables-restore', '-c']
             self.fill_dhcp_udp_checksums(namespace=network.namespace)
         ip_cidrs = []
         for fixed_ip in port.fixed_ips:
@@ -1204,6 +1224,10 @@ class DeviceManager(object):
             self.conf.use_namespaces):
             ip_cidrs.append(METADATA_DEFAULT_CIDR)
 
+        # Note(command), ['sudo', '/usr/bin/neutron-rootwrap', '/etc/neutron/rootwrap.conf', 'ip', 'netns', 'exec', 'qdhcp-fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', 'ip', '-o', 'link', 'show', 'tapff4dd46f-b2']
+        # Note(command), ['sudo', '/usr/bin/neutron-rootwrap', '/etc/neutron/rootwrap.conf', 'ip', 'netns', 'exec', 'qdhcp-fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', 'ip', 'addr', 'show', 'tapff4dd46f-b2', 'permanent']
+        # Note(command),  ['sudo', '/usr/bin/neutron-rootwrap', '/etc/neutron/rootwrap.conf', 'ip', 'netns', 'exec', 'qdhcp-fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', 'ip', '-4', 'addr', 'add', '20.20.3.2/24', 'scope', 'global', 'dev', 'tapff4dd46f-b2', 'brd', '20.20.3.255']
+        # Note(command), ['sudo', '/usr/bin/neutron-rootwrap', '/etc/neutron/rootwrap.conf', 'ip', 'netns', 'exec', 'qdhcp-fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', 'ip', '-4', 'addr', 'add', '169.254.169.254/16', 'scope', 'global', 'dev', 'tapff4dd46f-b2', 'brd', '169.254.255.255']
         self.driver.init_l3(interface_name, ip_cidrs,
                             namespace=network.namespace)
 
@@ -1214,6 +1238,8 @@ class DeviceManager(object):
                                       ip_version=constants.IP_VERSION_4)
 
         if self.conf.use_namespaces:
+            # Note(command),['sudo', '/usr/bin/neutron-rootwrap', '/etc/neutron/rootwrap.conf', 'ip', 'netns', 'exec', 'qdhcp-fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', 'ip', 'route', 'list', 'dev', 'tapff4dd46f-b2']
+            # Note(command), ['sudo', '/usr/bin/neutron-rootwrap', '/etc/neutron/rootwrap.conf', 'ip', 'netns', 'exec', 'qdhcp-fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', 'ip', '-4', 'route', 'replace', 'default', 'via', '20.20.3.1', 'dev', 'tapff4dd46f-b2']
             self._set_default_route(network, interface_name)
 
         return interface_name

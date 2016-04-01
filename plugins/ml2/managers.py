@@ -396,6 +396,11 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
             try:
                 # /usr/lib/python2.7/dist-packages/neutron/plugins/ml2/driver_api.py(579)create_network_precommit()
                 # The method implments is pass, do nothing!
+
+                # subnet_create_end
+                # 'create_port_postcommit'
+                # /usr/lib/python2.7/dist-packages/neutron/plugins/ml2/driver_api.py(669)create_subnet_precommit()
+                # The method implments is pass, do nothing!
                 getattr(driver.obj, method_name)(context)
             except Exception:
                 LOG.exception(
@@ -606,6 +611,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         cleanup. There is no guarantee that all mechanism drivers are
         called in this case.
         """
+        # /usr/lib/python2.7/dist-packages/neutron/plugins/ml2/managers.py (395)_call_on_drivers()
         self._call_on_drivers("create_port_postcommit", context)
 
     def update_port_precommit(self, context):

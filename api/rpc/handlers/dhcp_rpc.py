@@ -79,6 +79,7 @@ class DhcpRpcCallback(object):
         """Perform port operations taking care of concurrency issues."""
         try:
             if action == 'create_port':
+                # p_utils is <module 'neutron.plugins.common.utils' from '/usr/lib/python2.7/dist-packages/neutron/plugins/common/utils.pyc'>
                 return p_utils.create_port(plugin, context, port)
             elif action == 'update_port':
                 return plugin.update_port(context, port['id'], port)
@@ -217,6 +218,7 @@ class DhcpRpcCallback(object):
 
         """
         host = kwargs.get('host')
+        # {u'port': {u'name': u'', u'admin_state_up': True, u'network_id': u'fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', u'tenant_id': u'bbc698e70cb14751b596c7d7d833c7fe', u'fixed_ips': [{u'subnet_id': u'73a21f2c-0f26-4fee-ae16-d479351969ad'}], u'device_id': u'dhcpddd4d6bb-1560-5360-9a73-840de09c295e-fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e'}}
         port = kwargs.get('port')
         LOG.debug('Create dhcp port %(port)s '
                   'from %(host)s.',
@@ -228,6 +230,7 @@ class DhcpRpcCallback(object):
         if 'mac_address' not in port['port']:
             port['port']['mac_address'] = attributes.ATTR_NOT_SPECIFIED
         plugin = manager.NeutronManager.get_plugin()
+        # plugin is <class 'neutron.plugins.ml2.plugin.Ml2Plugin'>
         return self._port_action(plugin, context, port, 'create_port')
 
     @db_api.retry_db_errors

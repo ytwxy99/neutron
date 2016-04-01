@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2012 OpenStack Foundation
 # All Rights Reserved.
 #
@@ -160,8 +161,12 @@ class IPWrapper(SubProcessBase):
 
     def ensure_namespace(self, name):
         if not self.netns.exists(name):
+            # /usr/lib/python2.7/dist-packages/neutron/agent/linux/ip_lib.py(792)add()
+            # Note(command) ['ip', 'netns', 'exec', u'qdhcp-fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', 'sysctl', '-w', 'net.ipv4.conf.all.promote_secondaries=1']
+            # 创建namesapce
             ip = self.netns.add(name)
             lo = ip.device(LOOPBACK_DEVNAME)
+            # Note(command) ['ip', 'netns', 'exec', u'qdhcp-fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', 'ip', 'link', 'set', 'lo', 'up']
             lo.link.set_up()
         else:
             ip = IPWrapper(namespace=name)

@@ -134,7 +134,9 @@ def create_subnet(core_plugin, context, subnet):
 
 
 def create_port(core_plugin, context, port, check_allow_post=True):
+    # create subnet: {'dns_name': '', 'port_security_enabled': <object object at 0x7f7a5fd542f0>, 'binding:host_id': u'tracy', u'name': u'', 'allowed_address_pairs': <object object at 0x7f7a5fd542f0>, u'admin_state_up': True, u'network_id': u'fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', u'tenant_id': u'bbc698e70cb14751b596c7d7d833c7fe', 'extra_dhcp_opts': None, 'binding:vnic_type': 'normal', 'device_owner': 'network:dhcp', 'qos_policy_id': None, 'mac_address': <object object at 0x7f7a5fd542f0>, 'binding:profile': <object object at 0x7f7a5fd542f0>, u'fixed_ips': [{u'subnet_id': u'73a21f2c-0f26-4fee-ae16-d479351969ad'}], 'security_groups': <object object at 0x7f7a5fd542f0>, u'device_id': u'dhcpddd4d6bb-1560-5360-9a73-840de09c295e-fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e'}
     port_data = _fixup_res_dict(context, attributes.PORTS,
                                 port.get('port', {}),
                                 check_allow_post=check_allow_post)
+    # core_plugin is <class 'neutron.plugins.ml2.plugin.Ml2Plugin'>
     return core_plugin.create_port(context, {'port': port_data})

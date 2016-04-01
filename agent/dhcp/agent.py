@@ -433,6 +433,7 @@ class DhcpPluginApi(object):
     def create_dhcp_port(self, port):
         """Make a remote process call to create the dhcp port."""
         cctxt = self.client.prepare(version='1.1')
+        #  dispatch : ./api/rpc/handlers/dhcp_rpc.py 
         port = cctxt.call(self.context, 'create_dhcp_port',
                           port=port, host=self.host)
         if port:

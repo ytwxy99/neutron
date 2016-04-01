@@ -1052,9 +1052,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         new_host_port = self._get_host_port_if_changed(mech_context, attrs)
         # notify any plugin that is interested in port create events
         kwargs = {'context': context, 'port': new_host_port}
+        # /usr/lib/python2.7/dist-packages/neutron/callbacks/registry.py(43)notify()
         registry.notify(resources.PORT, events.AFTER_CREATE, self, **kwargs)
 
         try:
+            # if create subnet , <neutron.plugins.ml2.drivers.openvswitch.mech_driver.mech_openvswitch.OpenvswitchMechanismDriver object at 0x7f408f901510>
+            # /usr/lib/python2.7/dist-packages/neutron/plugins/ml2/managers.py  do nothing!
             self.mechanism_manager.create_port_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
             with excutils.save_and_reraise_exception():
@@ -1064,9 +1067,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         # REVISIT(rkukura): Is there any point in calling this before
         # a binding has been successfully established?
+        # /usr/lib/python2.7/dist-packages/neutron/db/securitygroups_rpc_base.py(160)notify_security_groups_member_updated()
         self.notify_security_groups_member_updated(context, result)
 
         try:
+            # /usr/lib/python2.7/dist-packages/neutron/plugins/ml2/plugin.py(272)_bind_port_if_needed()
+            # bound_context.current  
+            # {'status': u'DOWN', 'binding:host_id': u'tracy', 'allowed_address_pairs': [], 'extra_dhcp_opts': [], 'device_owner': u'network:dhcp', 'port_security_enabled': False, 'binding:profile': {}, 'qos_policy_id': None, 'fixed_ips': [{'subnet_id': u'deccf8dd-55fe-4fa1-8a2e-aa3ffa8ef5d0', 'ip_address': u'20.20.3.2'}], 'id': u'2f503d11-0574-4a3f-b022-157a9a4c5639', 'security_groups': [], 'device_id': u'dhcpddd4d6bb-1560-5360-9a73-840de09c295e-fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', 'name': u'', 'admin_state_up': True, 'network_id': u'fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', 'dns_name': u'', 'binding:vif_details': {}, 'binding:vnic_type': 'normal', 'binding:vif_type': 'binding_failed', 'tenant_id': u'bbc698e70cb14751b596c7d7d833c7fe', 'mac_address': u'fa:16:3e:f5:d0:f0'}
             bound_context = self._bind_port_if_needed(mech_context)
         except ml2_exc.MechanismDriverError:
             with excutils.save_and_reraise_exception():

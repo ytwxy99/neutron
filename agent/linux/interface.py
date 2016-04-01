@@ -309,6 +309,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
             attrs.insert(0, ('type', 'internal'))
 
         ovs = ovs_lib.OVSBridge(bridge)
+        # /usr/lib/python2.7/dist-packages/neutron/agent/common/ovs_lib.py(206)replace_port()
         ovs.replace_port(device_name, *attrs)
 
     def plug_new(self, network_id, port_id, device_name, mac_address,
@@ -334,6 +335,10 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         self._ovs_add_port(bridge, tap_name, port_id, mac_address,
                            internal=internal)
 
+        # ns_dev <neutron.agent.linux.ip_lib.IPDevice object at 0x7f34748e8410>
+        # Note(command) ['ip', 'link', 'set', u'tap3a9e37d9-34', 'address', u'fa:16:3e:4b:ad:c0']
+        # ['sudo', '/usr/bin/neutron-rootwrap', '/etc/neutron/rootwrap.conf', 'ip', 'link', 'set', 'tap3a9e37d9-34', 'address', 'fa:16:3e:4b:ad:c0']
+        # set mac address to tap device
         ns_dev.link.set_address(mac_address)
 
         if self.conf.network_device_mtu:
@@ -343,9 +348,15 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
 
         # Add an interface created by ovs to the namespace.
         if not self.conf.ovs_use_veth and namespace:
+            # /usr/lib/python2.7/dist-packages/neutron/agent/linux/ip_lib.py(161)ensure_namespace()
+            # create namespace, and some setting operations
+            # Note(command) ['sudo', '/usr/bin/neutron-rootwrap', '/etc/neutron/rootwrap.conf', 'ip', 'netns', 'exec', 'qdhcp-fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', 'sysctl', '-w', 'net.ipv4.conf.all.promote_secondaries=1']
+            # Note(command) ['sudo', '/usr/bin/neutron-rootwrap', '/etc/neutron/rootwrap.conf', 'ip', 'netns', 'add', 'qdhcp-fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e']
             namespace_obj = ip.ensure_namespace(namespace)
+            # ['ip', 'link', 'set', u'tap3a9e37d9-34', 'netns', u'qdhcp-fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e']
             namespace_obj.add_device_to_namespace(ns_dev)
 
+        # ['ip', 'netns', 'exec', u'qdhcp-fc3b5a9a-9ca6-4667-88e4-f3fbaa334c4e', 'ip', 'link', 'set', u'tap3a9e37d9-34', 'up']
         ns_dev.link.set_up()
         if self.conf.ovs_use_veth:
             root_dev.link.set_up()

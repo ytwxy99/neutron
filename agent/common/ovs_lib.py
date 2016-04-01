@@ -206,10 +206,13 @@ class OVSBridge(BaseOVS):
     def replace_port(self, port_name, *interface_attr_tuples):
         """Replace existing port or create it, and configure port interface."""
         with self.ovsdb.transaction() as txn:
+            # txn <neutron.agent.ovsdb.impl_vsctl.Transaction object at 0x7f34748f2550>
             txn.add(self.ovsdb.del_port(port_name))
             txn.add(self.ovsdb.add_port(self.br_name, port_name,
                                         may_exist=False))
             if interface_attr_tuples:
+                # Note(command), ['Interface', u'tapff4dd46f-b2', 'type=internal', u'external_ids:iface-id=ff4dd46f-b252-4549-9827-d1b8197dcccb', 'external_ids:iface-status=active', u'external_ids:attached-mac=fa:16:3e:c6:58:c5']
+                # Note(command) ['sudo', '/usr/bin/neutron-rootwrap', '/etc/neutron/rootwrap.conf', 'ovs-vsctl', '--timeout=10', '--oneline', '--format=json', '--', '--if-exists', 'del-port', 'tapff4dd46f-b2', '--', 'add-port', 'br-int', 'tapff4dd46f-b2', '--', 'set', 'Interface', 'tapff4dd46f-b2', 'type=internal', 'external_ids:iface-id=ff4dd46f-b252-4549-9827-d1b8197dcccb', 'external_ids:iface-status=active', 'external_ids:attached-mac=fa:16:3e:c6:58:c5']
                 txn.add(self.ovsdb.db_set('Interface', port_name,
                                           *interface_attr_tuples))
         # Don't return until the port has been assigned by vswitchd
