@@ -334,6 +334,7 @@ class Controller(object):
 
     def _send_nova_notification(self, action, orig, returned):
         if hasattr(self, '_nova_notifier'):
+            # /usr/lib/python2.7/dist-packages/neutron/notifiers/nova.py(134)send_network_change()
             self._nova_notifier.send_network_change(action, orig, returned)
 
     def index(self, request, **kwargs):
@@ -419,8 +420,17 @@ class Controller(object):
                                                self._resource, self._attr_info,
                                                allow_bulk=self._allow_bulk)
         # 创建网络时，action为create_network
+        # 创建subnet时，action为create_subnet
+        # 创建虚拟机时，action为create_port
         action = self._plugin_handlers[self.CREATE]
-        # Check authz
+
+        #########################################
+        a = open('/tmp/neutron', 'a')
+        a.write(action + " ")
+        a.close()
+        #########################################
+
+        ## Check authz
         if self._collection in body:
             # Have to account for bulk create
             items = body[self._collection]
@@ -484,6 +494,7 @@ class Controller(object):
                                 notifier_method,
                                 create_result)
             # network_create_end , neutron/agent/dhcp/agent.py
+            # port_create_end , neutron/agent/dhcp/agent.py
             self._send_dhcp_notification(request.context,
                                          create_result,
                                          notifier_method)
@@ -541,6 +552,7 @@ class Controller(object):
                 obj = do_create(body)
 
                 #创建network什么都没有做
+                #create a instance, do something
                 self._send_nova_notification(action, {},
                                              {self._resource: obj})
                 return notify({self._resource: self._view(request.context,
@@ -601,6 +613,12 @@ class Controller(object):
                                                self._resource, self._attr_info,
                                                allow_bulk=self._allow_bulk)
         action = self._plugin_handlers[self.UPDATE]
+        #########################################
+        a = open('/tmp/neutron', 'a')
+        a.write(action + " ")
+        a.close()
+        #########################################
+
         # Load object to check authz
         # but pass only attributes in the original body and required
         # by the policy engine to the policy 'brain'

@@ -113,6 +113,8 @@ class DhcpAgent(manager.Manager):
                                           self._process_monitor,
                                           self.dhcp_version,
                                           self.plugin_rpc)
+            # create a nova instance, driver is <neutron.agent.dhcp.agent.DhcpPluginApi object at 0x7ff2f5d79090>
+            # action is reload_allocations
             getattr(driver, action)(**action_kwargs)
             return True
         except exceptions.Conflict:
@@ -323,6 +325,7 @@ class DhcpAgent(manager.Manager):
         if network:
             self.refresh_dhcp_helper(network.id)
 
+    # create a nova instance, the action is port_create_end
     @utils.synchronized('dhcp-agent')
     def port_update_end(self, context, payload):
         """Handle the port.update.end notification event."""
@@ -338,6 +341,7 @@ class DhcpAgent(manager.Manager):
                 if old_ips != new_ips:
                     driver_action = 'restart'
             self.cache.put_port(updated_port)
+            # create a nova instance, the driver_action is reload_allocations
             self.call_driver(driver_action, network)
 
     def _is_port_on_this_agent(self, port):
